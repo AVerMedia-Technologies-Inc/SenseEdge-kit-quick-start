@@ -410,7 +410,7 @@ def main():
             )
 
             # 10. Show Window
-            cv.imshow("SenseEdge Social Distancing Monitor (RGB + Depth View)", combined)
+            cv.imshow("AVerMedia SenseEdge Kit - Demo", combined)
 
             key = cv.waitKey(1)
             if key == 27 or key == ord('q'):
