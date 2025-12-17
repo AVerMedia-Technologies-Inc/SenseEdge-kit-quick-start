@@ -1,40 +1,54 @@
 # SenseEdge Kit Quick Start
 
-**SenseEdge Kit** is a plug-and-play depth-sensing development platform that combines the powerful computing capabilities of **NVIDIA Jetson AGX Orin** with the precision of the **Intel RealSense D457** depth camera through a fully integrated **GSML → Jetson interface**.
+The AVerMedia **SenseEdge Kit** is an integrated development platform designed for real-time computer vision and depth-based AI applications. It combines the **AVerMedia D317 Edge AI Box (powered by NVIDIA Jetson AGX Orin)** with the **Intel RealSense D457 depth camera**, allowing developers to quickly build detection, perception, and distance-measurement workloads.
 
-The kit removes the complex setup of traditional depth camera development—such as driver integration, firmware matching, and kernel modules—allowing developers to focus directly on building AI or robotics applications.
+## What's in the Box
 
----
+The SenseEdge Kit includes the following components:
 
-## What's in the Box?
+- **AVerMedia D317 Edge AI Box**  
+  - Integrated NVIDIA Jetson AGX Orin module  
 
-* Jetson AGX Orin
-* Intel RealSense D457 Depth Camera
-* GSML–to–Jetson Adapter Board
-* GSML Cable
-* Power Adapter
+- **Intel RealSense D457 Depth Camera**
 
----
+- **GMSL-to-Jetson Interface Board**
+
+- **GMSL Cable**
+
+- **Power Adapter**
+
+## Before You Start
+
+You may access the D317 by connecting a monitor, keyboard, and mouse to use the GUI directly, or by using any remote-access workflow you normally apply in Jetson development.
+
+> [!NOTE]
+> Unless explicitly noted, **all commands in this guide are intended to be executed on the Jetson device (D317)**.
 
 ## Run the Setup Script
 
-SenseEdge Kit comes with a pre-tested JetPack environment. Please download the quick-start repository and run the setup script:
+SenseEdge Kit relies on a pre-tested JetPack environment on the Jetson device.  
+Please clone the quick-start repository and run the setup script as follows:
 
 ```bash
 git clone https://github.com/AVerMedia-Technologies-Inc/SenseEdge-kit-quick-start.git
 cd SenseEdge-kit-quick-start
-./setup.sh
 ```
-> [!NOTE]
-> The setup script will prompt you to make some choices, such as whether to download the required AI models concurrently. Please follow the instructions to complete the setup.
 
 The `setup.sh` script will automatically perform the following steps:
 
-* Check the system environment (e.g., JetPack version, network connectivity).
-* Install `pip` and `venv` (Python virtual environment module).
-* Create a dedicated virtual environment named `realsense_env` under the `~/aver/` directory.
-* Activate the environment and install required Python libraries (e.g., pycuda, opencv, pyrealsense2).
-* Prompt the user to confirm whether to download the necessary AI models concurrently (default: Yes).
+- Check the system environment (e.g., JetPack version, network connectivity).  
+- Install the CUDA compiler and TensorRT dependencies.  
+- Install `pip` and the Python `venv` module if missing.  
+- Create a dedicated virtual environment named `realsense_env` under the `~/avermedia/` directory.  
+- Activate the environment and install required Python libraries (e.g., `pycuda`, `opencv-python`, `pyrealsense2`).  
+- Prompt the user to confirm whether to download the necessary AI models (default: Yes).
+
+```bash
+./setup.sh
+```
+![Setup Script](images/setup-script.png)
+
+> Figure: The setup script will prompt you to make some choices, such as whether to download the required AI models concurrently. Please follow the instructions to complete the setup.
 
 ### Model Download
 
@@ -54,7 +68,7 @@ Follow these steps to activate the virtual environment and run the demo:
 1.  **Activate the Virtual Environment:**
 
     ```bash
-    source ~/aver/realsense_env/bin/activate
+    source ~/avermedia/realsense_env/bin/activate
     ```
 
 2.  **Run the Python Demo:**
@@ -63,7 +77,11 @@ Follow these steps to activate the virtual environment and run the demo:
     python demo.py
     ```
 
-After execution, you should see real-time color and depth streams, detection bounding boxes, and distance information displayed on the image.
+After execution, the application window will display synchronized color and depth streams with overlayed AI inference results.
+
+![Demo Result](images/senseEdge-kit-demo-1.png)
+
+> Figure: Real-time detection showing bounding boxes and depth heatmaps; the boxes turn red to trigger a proximity warning when the calculated 3D distance between individuals is too close.
 
 ## Customize Your Development
 
