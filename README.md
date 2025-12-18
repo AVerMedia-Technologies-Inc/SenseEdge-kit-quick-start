@@ -1,19 +1,19 @@
 # SenseEdge Kit Quick Start
 
-The AVerMedia **SenseEdge Kit** is an integrated development platform designed for real-time computer vision and depth-based AI applications. It combines the **AVerMedia D317 Edge AI Box (powered by NVIDIA Jetson AGX Orin)** with the **Intel RealSense D457 depth camera**, allowing developers to quickly build detection, perception, and distance-measurement workloads.
+The AVerMedia **SenseEdge Kit** is an integrated development platform designed for real-time computer vision and depth-based AI applications. It combines the **AVerMedia D317 Carrier Board (populated with NVIDIA Jetson AGX Orin module)** with the **RealSense D457 depth camera**, allowing developers to quickly build spatial detection, perception, and distance-measurement workloads.
 
 ## What's in the Box
 
 The SenseEdge Kit includes the following components:
 
-- **AVerMedia D317 Edge AI Box**  
+- **AVerMedia D317 Carrier Board**  
   - Integrated NVIDIA Jetson AGX Orin module  
 
-- **Intel RealSense D457 Depth Camera**
+- **RealSense D457 Depth Camera**
 
 - **GMSL-to-Jetson Interface Board**
 
-- **GMSL Cable**
+- **GMSL/FAKRA Cable**
 
 - **Power Adapter**
 
