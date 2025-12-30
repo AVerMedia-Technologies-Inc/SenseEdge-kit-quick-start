@@ -300,7 +300,7 @@ run_command_log_error() {
 check_internet() {
     print_info "Checking internet connectivity"
     if command -v wget >/dev/null 2>&1; then
-        if wget -q --spider --timeout=10 --tries=1 "https://www.avermedia.com" 2>/dev/null; then
+        if wget -q --spider --no-check-certificate --timeout=10 --tries=1 "https://www.avermedia.com" 2>/dev/null; then
             print_success "Internet connectivity confirmed"
             INTERNET_CONNECTED=true
             return 0
@@ -310,17 +310,69 @@ check_internet() {
     return 1
 }
 
-check_time() {
-    print_info "Checking system time"
-    current_time=$(date +%s)
-    min_time=$(date -d "2024-01-01 00:00:00 UTC" +%s 2>/dev/null)
-    if [ "$current_time" -lt "$min_time" ]; then
-        print_warning "System time might be incorrect: $(date). This may cause SSL/TLS certificate validation issues."
-        return 0 
+# Helper function to get internet time
+get_internet_time() {
+    # Extract Date header from a reliable server (Google)
+    local remote_date=$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep "^  Date: " | cut -d' ' -f5-10)
+    if [ -n "$remote_date" ]; then
+        date -d "$remote_date" +%s
+    else
+        echo "0"
     fi
-    print_success "System time appears valid: $(date)"
-    SYSTEM_TIME_VALID=true
-    return 0
+}
+
+# Enhanced time check function with auto-sync capability
+check_time() {
+    print_info "Checking system time..."
+
+    local internet_time=$(get_internet_time)
+    local current_time=$(date +%s)
+
+    # 1. Fallback: If internet time cannot be fetched (but internet check passed previously)
+    if [ "$internet_time" -eq 0 ]; then
+        print_warning "Could not fetch precise internet time. Performing basic sanity check."
+        # Basic check: Ensure time is at least after Jan 1, 2025
+        local min_time=$(date -d "2025-01-01 00:00:00" +%s)
+        if [ "$current_time" -lt "$min_time" ]; then
+            print_error "System time is critically outdated ($(date))."
+            print_info "Please set time manually using: sudo date -s 'YYYY-MM-DD HH:MM:SS'"
+            return 1
+        fi
+        SYSTEM_TIME_VALID=true
+        return 0
+    fi
+
+    # 2. Precision Check: Compare system time with internet time
+    local diff=$(( internet_time - current_time ))
+    local abs_diff=${diff#-} # Absolute value
+
+    # Allow a tolerance of 300 seconds (5 minutes)
+    if [ "$abs_diff" -gt 300 ]; then
+        print_warning "System time is incorrect! Offset by approx $abs_diff seconds."
+        print_info "System time:   $(date)"
+        print_info "Internet time: $(date -d "@$internet_time")"
+
+        # 3. Ask user to update
+        if ask_user "Would you like to update the system time to match internet time?" "y"; then
+            print_info "Updating system time (requires sudo)..."
+            if sudo date -s "@$internet_time"; then
+                print_success "System time updated successfully."
+                SYSTEM_TIME_VALID=true
+                return 0
+            else
+                print_error "Failed to update time. Please check your sudo password."
+                return 1
+            fi
+        else
+            print_warning "Proceeding with incorrect system time. This may cause SSL/TLS errors during download."
+            # We don't fail here, but we warn heavily
+            return 0
+        fi
+    else
+        print_success "System time is accurate (within 5 minutes)."
+        SYSTEM_TIME_VALID=true
+        return 0
+    fi
 }
 
 check_jetpack_version() {
