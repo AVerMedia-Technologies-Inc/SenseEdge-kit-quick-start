@@ -36,7 +36,7 @@ cd SenseEdge-kit-quick-start
 
 The `setup.sh` script will automatically perform the following steps:
 
-- Check the system environment (e.g., JetPack version, network connectivity).  
+- Check the system environment (e.g., JetPack version, network connectivity, system time).  
 - Install the CUDA compiler and TensorRT dependencies.  
 - Install `pip` and the Python `venv` module if missing.  
 - Create a dedicated virtual environment named `realsense_env` under the `~/avermedia/` directory.  
@@ -48,7 +48,7 @@ The `setup.sh` script will automatically perform the following steps:
 ```
 ![Setup Script](images/setup-script.png)
 
-> Figure: The setup script will prompt you to make some choices, such as whether to download the required AI models concurrently. Please follow the instructions to complete the setup.
+> Figure: The setup script will prompt you to make some choices, such as whether to synchronize the system time or download the required AI models. Please follow the instructions to complete the setup.
 
 ### Model Download
 
