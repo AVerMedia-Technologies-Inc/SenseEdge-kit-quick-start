@@ -19,7 +19,7 @@ The SenseEdge Kit includes the following components:
 
 ## Before You Start
 
-You may access the D317 by connecting a monitor, keyboard, and mouse to use the GUI directly, or by using any remote-access workflow you normally apply in Jetson development.
+The SenseEdge Kit comes with **JetPack 6.2 (L4T 36.4.3)** pre-installed. You may access the D317 by connecting a monitor, keyboard, and mouse to use the GUI directly, or by using any remote-access workflow you normally apply in Jetson development.
 
 > [!NOTE]
 > Unless explicitly noted, **all commands in this guide are intended to be executed on the Jetson device (D317)**.
@@ -55,7 +55,6 @@ The `setup.sh` script will automatically perform the following steps:
 If you **did not choose** to download the models during the `setup.sh` script execution, you can run the following command later to download them separately:
 
 ```bash
-# Ensure you are in the SenseEdge-kit-quick-start directory
 ./scripts/download_model.sh
 ```
 
