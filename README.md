@@ -36,19 +36,18 @@ cd SenseEdge-kit-quick-start
 
 The `setup.sh` script will automatically perform the following steps:
 
-- Check the system environment (e.g., JetPack version, network connectivity, system time).  
-- Install the CUDA compiler and TensorRT dependencies.  
-- Install `pip` and the Python `venv` module if missing.  
-- Create a dedicated virtual environment named `realsense_env` under the `~/avermedia/` directory.  
-- Activate the environment and install required Python libraries (e.g., `pycuda`, `opencv-python`, `pyrealsense2`).  
-- Prompt the user to confirm whether to download the necessary AI models (default: Yes).
+- **Check System Prerequisites**: Verifies network connectivity and system time to prevent SSL/installation errors.
+- **Install System Dependencies**: Installs CUDA compiler, TensorRT dependencies, `pip`, and `venv` tools.
+- **Setup Virtual Environment**: Creates a dedicated environment (`realsense_env`) under `~/avermedia/`.
+- **Install Python Libraries**: Installs `pycuda`, `opencv-python`, and `pyrealsense2`.
+- **Download AI Models**: Prompts to automatically download the necessary models for the demo.
 
 ```bash
 ./setup.sh
 ```
 ![Setup Script](images/setup-script.png)
 
-> Figure: The setup script will prompt you to make some choices, such as whether to synchronize the system time or download the required AI models. Please follow the instructions to complete the setup.
+> Figure: The setup script will prompt you to confirm settings, such as power mode configuration and model downloading. You can press **Enter** to accept the default options (capitalized, e.g., `[Y/n]`).
 
 ### Model Download
 
@@ -93,3 +92,9 @@ Once you have access to synchronized color and depth frames, you are free to int
 * 3D scene understanding and depth measurement
 * Gesture recognition or human-computer interaction sensing
 
+> [!TIP]
+> **Maximize Performance (Optional)**
+> By default, the Jetson device may run in a power-efficient mode. To unlock maximum performance (MAXN mode) for smoother AI inference, you can manually configure the power mode via the GUI (top-right system menu) or run the following command and **reboot**:
+> ```bash
+> sudo nvpmodel -m 0
+> ```

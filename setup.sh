@@ -181,22 +181,28 @@ ask_user() {
     local question="$1"
     local default="$2"
     local response
+    local prompt_suffix
+
+    # Determine prompt suffix based on default
+    if [ "$default" = "y" ] || [ "$default" = "Y" ]; then
+        prompt_suffix="[Y/n]"
+    else
+        prompt_suffix="[y/N]"
+    fi
 
     while true; do
-        printf "${YELLOW}%s${NC}\n" "$question"
+        printf "${YELLOW}%s %s ${NC}" "$question" "$prompt_suffix"
+        read -r response
 
-        if [ -n "$default" ]; then
-            printf "  ${YELLOW}Default: %s${NC}\n" "$default"
-            read -p "  Your choice [y/n]: " response
-            response=${response:-$default}
-        else
-            read -p "  Your choice [y/n]: " response
+        # Handle Enter key (empty input uses default)
+        if [ -z "$response" ]; then
+            response="$default"
         fi
 
         case $response in
             [Yy]|[Yy][Ee][Ss]) return 0 ;;
             [Nn]|[Nn][Oo]) return 1 ;;
-            *) printf "  ${RED}Please answer yes (y) or no (n).${NC}\n\n" ;;
+            *) printf "  ${RED}Please answer yes (y) or no (n).${NC}\n" ;;
         esac
     done
 }
@@ -328,10 +334,9 @@ check_time() {
     local internet_time=$(get_internet_time)
     local current_time=$(date +%s)
 
-    # 1. Fallback: If internet time cannot be fetched (but internet check passed previously)
+    # 1. Fallback: If internet time cannot be fetched
     if [ "$internet_time" -eq 0 ]; then
         print_warning "Could not fetch precise internet time. Performing basic sanity check."
-        # Basic check: Ensure time is at least after Jan 1, 2025
         local min_time=$(date -d "2025-01-01 00:00:00" +%s)
         if [ "$current_time" -lt "$min_time" ]; then
             print_error "System time is critically outdated ($(date))."
@@ -342,37 +347,38 @@ check_time() {
         return 0
     fi
 
-    # 2. Precision Check: Compare system time with internet time
+    # 2. Precision Check
     local diff=$(( internet_time - current_time ))
-    local abs_diff=${diff#-} # Absolute value
+    local abs_diff=${diff#-} 
 
     # Allow a tolerance of 300 seconds (5 minutes)
     if [ "$abs_diff" -gt 300 ]; then
-        print_warning "System time is incorrect! Offset by approx $abs_diff seconds."
+        print_warning "System time differs from internet time by approx $abs_diff seconds."
         print_info "System time:   $(date)"
         print_info "Internet time: $(date -d "@$internet_time")"
-
+        
         # 3. Ask user to update
         if ask_user "Would you like to update the system time to match internet time?" "y"; then
             print_info "Updating system time (requires sudo)..."
             if sudo date -s "@$internet_time"; then
                 print_success "System time updated successfully."
-                SYSTEM_TIME_VALID=true
-                return 0
             else
                 print_error "Failed to update time. Please check your sudo password."
-                return 1
+                exit 1 # Exit on sudo failure
             fi
         else
-            print_warning "Proceeding with incorrect system time. This may cause SSL/TLS errors during download."
-            # We don't fail here, but we warn heavily
-            return 0
+            # --- SOFT WARNING MODE ---
+            # Even if this printing fails for some reason, the script will continue
+            print_warning "Time sync skipped. Proceeding with current system time."
+            print_warning "NOTE: Large time discrepancies may cause SSL/Certificate errors during installation."
+            print_info    "Suggestion: If installation fails, please check your SYSTEM TIMEZONE settings."
         fi
     else
         print_success "System time is accurate (within 5 minutes)."
-        SYSTEM_TIME_VALID=true
-        return 0
     fi
+
+    SYSTEM_TIME_VALID=true
+    return 0
 }
 
 check_jetpack_version() {
@@ -633,33 +639,55 @@ install_opencv() {
 }
 
 execute_model_script() {
+    # Define the expected final artifact (Must match what is in download_model.sh)
+    # Note: This creates a slight coupling between scripts, but improves UX significantly.
+    local EXPECTED_MODEL_DIR="./models"
+    local EXPECTED_ENGINE="$EXPECTED_MODEL_DIR/yolo11n.engine"
+
     if [ ! -f "$MODEL_SCRIPT_PATH" ]; then
         print_warning "Model download/conversion script not found at ${BOLD}%s${NC}. Skipping model related steps." "$MODEL_SCRIPT_PATH"
         return 0
     fi
     
-    if ask_user "Do you want to run the model download and conversion script (${BOLD}$MODEL_SCRIPT_PATH${NC})?" "y"; then
+    # --- Logic Branch based on existence ---
+    if [ -f "$EXPECTED_ENGINE" ]; then
+        print_success "AI Models detected in %s." "$EXPECTED_MODEL_DIR"
         
-        print_info "Executing external model script: %s" "$MODEL_SCRIPT_PATH"
-        
-        # Pass -l argument if logging is enabled in setup.sh
-        local script_args=""
-        if [ "$LOG_PIP_COMMANDS" = true ]; then
-            script_args="-l"
+        # Scenario A: Model exists -> Default to NO (Skip)
+        if ask_user "Do you want to RE-RUN the download/conversion script (Repair/Update)?" "n"; then
+            print_info "Re-running model script..."
+            # Fall through to execution
+        else
+            print_info "Skipping model script as requested (Models are present)."
+            return 0
         fi
-        
-        # Use simple execution, assuming the script handles its own logging flags correctly now
-        if ! /bin/bash "$MODEL_SCRIPT_PATH" $script_args; then
-            print_error "Model script (%s) failed to execute or completed with errors. See its output/log for details." "$MODEL_SCRIPT_PATH"
-            return 1
-        fi
-        
-        print_success "Model script (%s) completed successfully." "$MODEL_SCRIPT_PATH"
-        return 0
     else
-        print_info "Skipping model download/conversion as requested."
-        return 0
+        # Scenario B: Model missing -> Default to YES (Download)
+        if ask_user "Do you want to run the model download and conversion script?" "y"; then
+            print_info "Executing external model script..."
+            # Fall through to execution
+        else
+            print_info "Skipping model download/conversion as requested."
+            return 0
+        fi
     fi
+
+    # --- Execution Block ---
+    print_info "Running: %s" "$MODEL_SCRIPT_PATH"
+    
+    # Pass -l argument if logging is enabled in setup.sh
+    local script_args=""
+    if [ "$LOG_PIP_COMMANDS" = true ]; then
+        script_args="-l"
+    fi
+    
+    if ! /bin/bash "$MODEL_SCRIPT_PATH" $script_args; then
+        print_error "Model script (%s) failed or completed with errors." "$MODEL_SCRIPT_PATH"
+        return 1
+    fi
+    
+    print_success "Model script completed successfully."
+    return 0
 }
 
 print_summary() {
